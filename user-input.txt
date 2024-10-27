@@ -1,1 +1,47 @@
 
+trigger:
+  - main  # Replace with your branch name as needed
+
+stages:
+  - stage: RunAnsiblePlaybook
+    jobs:
+      - job: ExecutePlaybook
+        displayName: "Execute Ansible Playbook"
+        pool:
+          vmImage: 'ubuntu-latest'  # Replace with your preferred VM
+
+        variables:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.x'  # Use Python 3 for Ansible
+              addToPath: true
+
+          - script: |
+              python3 -m pip install --upgrade pip
+              pip install ansible
+            displayName: 'Install Ansible'
+
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                ansible-playbook playbook.yml -e "env=${{ parameters.environment }} sequence_id=${{ parameters.sequence_id }}"
+            displayName: 'Run Ansible Playbook'
+
+parameters:
+  - name: environment
+    displayName: "Environment"
+    type: string
+    default: "dev"  # Default environment; you can change as needed
+    values:
+      - dev
+      - test
+      - prod
+
+  - name: sequence_id
+    displayName: "Sequence ID"
+    type: string
+    default: "1"
